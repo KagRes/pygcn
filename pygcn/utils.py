@@ -33,10 +33,11 @@ def load_data(path="../data/cora/", dataset="cora"):
                         dtype=np.float32)
 
     # build symmetric adjacency matrix
-    adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+    # adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
 
     features = normalize(features)
-    adj = normalize(adj + sp.eye(adj.shape[0]))
+    adj = normalize_row_and_col(adj + sp.eye(adj.shape[0]))
+    # adj = adj.dot(adj)
 
     idx_train = range(140)
     idx_val = range(200, 500)
@@ -51,6 +52,16 @@ def load_data(path="../data/cora/", dataset="cora"):
     idx_test = torch.LongTensor(idx_test)
 
     return adj, features, labels, idx_train, idx_val, idx_test
+
+
+def normalize_row_and_col(mx):
+    """Row-normalize sparse matrix"""
+    rowsum = np.array(mx.sum(1))
+    r_inv = np.sqrt(np.power(rowsum, -1)).flatten()
+    r_inv[np.isinf(r_inv)] = 0.
+    r_mat_inv = sp.diags(r_inv)
+    mx = r_mat_inv.dot(mx).dot(r_mat_inv)
+    return mx
 
 
 def normalize(mx):
